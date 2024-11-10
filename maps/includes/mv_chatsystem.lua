@@ -10,7 +10,9 @@ function mv_chat.onchat(player,string)
   local command = string.lower(string.match(message, "%a+"))
   local params = explode(" ", string.sub(message, string.len(command)+2))
   for i,param in pairs(params) do
-    if tonumber(param) ~= nil then param = tonumber(param)end
+    if tonumber(param) ~= nil then
+      params[i] = tonumber(param)
+    end
   end
   table.insert( params, 1, player )
   if (prefix == mv_chat.prefix and mv_chat.cmds[command]) then

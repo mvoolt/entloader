@@ -40,6 +40,8 @@ markernotffscript = {
 function copyvector(vector)
   if (type(vector) == "userdata" and tostring(vector):sub(1,6) == "Vector") then
     return Vector(vector.x, vector.y, vector.z)
+  elseif (type(vector) == "userdata" and tostring(vector):sub(1,6) == "QAngle") then
+    return QAngle(vector.x, vector.y, vector.z)
   end
 end
 
@@ -305,11 +307,23 @@ mv_chat.register("stack", function(player,amount,_x,_y,_z,_rx,_ry,_rz)
     ChatToAll("Not enough params! usage: -setrot <i> <x> [y] [z] [pitch] [yaw] [roll]")
   else
     local offset = Vector(_x,(_y==nil and 0 or _y),(_z==nil and 0 or _z))
-    local pyr = QAngle(_rx,(_ry==nil and 0 or _ry),(_rz==nil and 0 or _rz))
-     for i=1,amount do
-      for id,tbl in getselected() do
+    local pyr = QAngle((_rx==nil and 0 or _rx),(_ry==nil and 0 or _ry),(_rz==nil and 0 or _rz))
+    for id,tbl in getselected() do
+      local refent = tbl.actual
+      local newent = {
+        classname = refent.classname,
+        origin = copyvector(refent.origin),
+        angles = QAngle(0,0,0)
+      }
+      if (refent.targetname) then newent.angles = refent.targetname end
+      if (refent.angles) then newent.angles = copyvector(refent.angles) end
+      for i=1,amount do
+        newent.origin = newent.origin + offset
+        newent.angles = newent.angles + pyr
+        local m = entload.spawn(entload.tomarker(newent))
+        entload.newents[m:GetId()] = {actual = newent, marker = m, selected = false}
       end
-     end
+    end
   end
 end)
 
