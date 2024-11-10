@@ -270,11 +270,9 @@ mv_chat.register("translate", function(player,arg1,arg2,arg3)
     ChatToAll("Not enough params! usage: -translate <x> [y] [z]")
   else
     local x,y,z = tonumber(arg1),(arg2==nil and 0 or tonumber(arg2)),(arg3==nil and 0 or tonumber(arg3))
-    for id,tbl in pairs(entload.newents) do
-      if tbl.selected then
-        tbl.marker:SetOrigin(tbl.actual.origin + Vector(x,y,z))
-        entload.newents[id].actual.origin = tbl.actual.origin + Vector(x,y,z)
-      end
+    for id,tbl in getselected() do
+      tbl.marker:SetOrigin(tbl.actual.origin + Vector(x,y,z))
+      tbl.actual.origin = tbl.actual.origin + Vector(x,y,z)
     end
   end
 end)
@@ -283,11 +281,9 @@ mv_chat.register("setrot", function(player,arg1,arg2,arg3)
     ChatToAll("Not enough params! usage: -setrot <x> [y] [z]")
   else
     local x,y,z = tonumber(arg1),(arg2==nil and 0 or tonumber(arg2)),(arg3==nil and 0 or tonumber(arg3))
-    for id,tbl in pairs(entload.newents) do
-      if tbl.selected then
-        entload.newents[id].actual.angles = QAngle(x, y, z)
-        tbl.marker:SetAngles(QAngle(x, y, z))
-      end
+    for id,tbl in getselected() do
+      tbl.actual.angles = QAngle(x, y, z)
+      tbl.marker:SetAngles(QAngle(x, y, z))
     end
   end
 end)
@@ -297,11 +293,9 @@ mv_chat.register("rotate", function(player,arg1,arg2,arg3)
     ChatToAll("Not enough params! usage: -setrot <x> [y] [z]")
   else
     local x,y,z = tonumber(arg1),(arg2==nil and 0 or tonumber(arg2)),(arg3==nil and 0 or tonumber(arg3))
-    for id,tbl in pairs(entload.newents) do
-      if tbl.selected then
-        entload.newents[id].actual.angles = tbl.actual.angles + QAngle(x, y, z)
-        tbl.marker:SetAngles((tbl.actual.angles + QAngle(x, y, z)))
-      end
+    for id,tbl in getselected() do
+      tbl.actual.angles = tbl.actual.angles + QAngle(x, y, z)
+      tbl.marker:SetAngles((tbl.actual.angles + QAngle(x, y, z)))
     end
   end
 end)
@@ -313,12 +307,7 @@ mv_chat.register("stack", function(player,amount,_x,_y,_z,_rx,_ry,_rz)
     local offset = Vector(_x,(_y==nil and 0 or _y),(_z==nil and 0 or _z))
     local pyr = QAngle(_rx,(_ry==nil and 0 or _ry),(_rz==nil and 0 or _rz))
      for i=1,amount do
-      for id,tbl in pairs(entload.newents) do
-        if tbl.selected then
-            RemoveEntity(tbl.marker)
-            entload.newents[id] = nil
-            entload.selectedcount = entload.selectedcount - 1
-        end
+      for id,tbl in getselected() do
       end
      end
   end
@@ -328,61 +317,51 @@ end)
 mv_menu.makemenu("spanner", "Spanner Menu")
 --||----------------------------------------------------------||--
 local function removeall()
-  for id,tbl in pairs(entload.newents) do
-    if tbl.selected then
-        RemoveEntity(tbl.marker)
-        entload.newents[id] = nil
-        entload.selectedcount = entload.selectedcount - 1
-    end
+  for id,tbl in getselected() do
+    RemoveEntity(tbl.marker)
+    entload.newents[id] = nil
+    entload.selectedcount = entload.selectedcount - 1
   end
 end
 mv_menu.register("spanner", "Remove", removeall)
 mv_chat.register("removeall", removeall)
 --||----------------------------------------------------------||--
 local function rotate30()
-  for id,tbl in pairs(entload.newents) do
-    if tbl.selected then
-        local angles = tbl.actual.angles
-        local y = angles.y + 30
-        y = y % 360 -- normalized between 0 and 360
-        tbl.actual.angles = QAngle(angles.x, y, angles.z)
-        tbl.marker:SetAngles(QAngle(angles.x, y, angles.z))
-    end
+  for id,tbl in getselected() do
+    local angles = tbl.actual.angles
+    local y = angles.y + 30
+    y = y % 360 -- normalized between 0 and 360
+    tbl.actual.angles = QAngle(angles.x, y, angles.z)
+    tbl.marker:SetAngles(QAngle(angles.x, y, angles.z))
   end
 end
 mv_menu.register("spanner", "Rotate by 30°", rotate30)
 mv_chat.register("rotate30", rotate30)
 --||----------------------------------------------------------||--
 local function droptofloorall()
-  for id,tbl in pairs(entload.newents) do
-    if tbl.selected then
-        DropToFloor(tbl.marker)
-        tbl.actual.origin = copyvector(tbl.marker:GetOrigin())
-    end
+  for id,tbl in getselected() do
+    DropToFloor(tbl.marker)
+    tbl.actual.origin = copyvector(tbl.marker:GetOrigin())
   end
 end
 mv_menu.register("spanner", "Drop to floor", droptofloorall)
 mv_chat.register("droptofloor", droptofloorall)
 --||----------------------------------------------------------||--
 local function resetxz()
-  for id,tbl in pairs(entload.newents) do
-    if tbl.selected then
-        local y = tbl.actual.angles.y
-        tbl.actual.angles = QAngle(0, y, 0)
-        tbl.marker:SetAngles(QAngle(0, y, 0))
-    end
+  for id,tbl in getselected() do
+    local y = tbl.actual.angles.y
+    tbl.actual.angles = QAngle(0, y, 0)
+    tbl.marker:SetAngles(QAngle(0, y, 0))
   end
 end
 mv_menu.register("spanner", "Reset pitch and roll", resetxz)
 mv_chat.register("resetxz", resetxz)
 --||----------------------------------------------------------||--
 local function deselectall()
-  for id,tbl in pairs(entload.newents) do
-    if tbl.selected then
-      tbl.marker:SetRenderFx(0)
-      tbl.selected = false
-      entload.selectedcount = entload.selectedcount - 1
-    end
+  for id,tbl in getselected() do
+    tbl.marker:SetRenderFx(0)
+    tbl.selected = false
+    entload.selectedcount = entload.selectedcount - 1
   end
 end
 mv_menu.register("spanner", "Deselect", deselectall)
