@@ -3,6 +3,7 @@ IncludeScript("base_ctf") -- we'll need team CTF flags
 
 entcap = info_ff_script:new({
 	model = "models/props_c17/substation_stripebox01a.mdl",
+	invisible = true,
 	health = 100,
 	armor = 300,
 	grenades = 200,
@@ -21,6 +22,15 @@ entcap = info_ff_script:new({
 	fortpoints = function(cap, player) return FORTPOINTS_PER_CAPTURE end,
 	touchflags = {AllowFlags.kOnlyPlayers,AllowFlags.kBlue, AllowFlags.kRed, AllowFlags.kYellow, AllowFlags.kGreen}
 })
+
+function entcap:spawn()
+	-- make it invisible
+	if (self.invisible) then
+		entity:SetRenderFx(RenderFx.kFadeFast)
+		entity:SetRenderMode(6) -- RENDERMODE_ENVIROMENTAL
+	end
+	info_ff_script.spawn(self)
+end
 
 function entcap:touch(touch_entity)
    if IsPlayer(touch_entity) then
@@ -94,3 +104,48 @@ agnosticallowedmethod = function(_,player) return player:GetTeamId() ~= Team.kSp
 global = { validspawn = agnosticallowedmethod }
 marine = { validspawn = agnosticallowedmethod } -- Currently global spawns for both marine and hidden in hdn_ maps till we have a Hidden gamemode in FF
 hidden = { validspawn = agnosticallowedmethod }
+
+function baseflag:touch( touch_entity ) -- overridden to update objective marker to correct entity as we're not spawning {team}_cap but rather {team}_entcap
+	local player = CastToPlayer( touch_entity )
+	-- pickup if they can
+	if self.notouch[player:GetId()] then return; end
+
+	if player:GetTeamId() ~= self.team then
+		-- let the teams know that the flag was picked up
+		SmartSound(player, "yourteam.flagstolen", "yourteam.flags`tolen", "otherteam.flagstolen")
+		RandomFlagTouchSpeak( player )
+		SmartMessage(player, "#FF_YOUPICKUP", "#FF_TEAMPICKUP", "#FF_OTHERTEAMPICKUP", Color.kGreen, Color.kGreen, Color.kRed)
+
+		-- if the player is a spy, then force him to lose his disguise
+		player:SetDisguisable( false )
+		-- if the player is a spy, then force him to lose his cloak
+		player:SetCloakable( false )
+
+		-- note: this seems a bit backwards (Pickup verb fits Player better)
+		local flag = CastToInfoScript(entity)
+		flag:Pickup(player)
+		AddHudIcon( player, self.hudicon, flag:GetName(), self.hudx, self.hudy, self.hudwidth, self.hudheight, self.hudalign )
+
+		-- show on the deathnotice board
+		--ObjectiveNotice( player, "grabbed the flag" )
+		-- log action in stats
+		LogLuaEvent(player:GetId(), 0, "flag_touch", "flag_name", flag:GetName(), "player_origin", (string.format("%0.2f",player:GetOrigin().x) .. ", " .. string.format("%0.2f",player:GetOrigin().y) .. ", " .. string.format("%0.1f",player:GetOrigin().z) ), "player_health", "" .. player:GetHealth());
+
+		local team = nil
+		-- get team as a lowercase string
+		if player:GetTeamId() == Team.kBlue then team = "blue" end
+		if player:GetTeamId() == Team.kRed then team = "red" end
+		if player:GetTeamId() == Team.kGreen then team = "green" end
+		if player:GetTeamId() == Team.kYellow then team = "yellow" end
+
+		-- objective icon pointing to the cap
+		UpdateObjectiveIcon( player, GetEntityByName( team.."_entcap" ) )
+
+		-- 100 points for initial touch on flag
+		if self.status == 0 then player:AddFortPoints(FORTPOINTS_PER_INITIALTOUCH, "#FF_FORTPOINTS_INITIALTOUCH") end
+		self.status = 1
+		self.carriedby = player:GetName()
+		self:refreshStatusIcons(flag:GetName())
+
+	end
+end
