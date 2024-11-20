@@ -271,14 +271,10 @@ mv_chat.register("translate", function(player,arg1,arg2,arg3)
   end
 end)
 mv_chat.register("setrot", function(player,arg1,arg2,arg3)
-  if not arg1 then
-    ChatToAll("Not enough params! usage: -setrot <x> [y] [z]")
-  else
-    local x,y,z = tonumber(arg1),(arg2==nil and 0 or tonumber(arg2)),(arg3==nil and 0 or tonumber(arg3))
-    for id,tbl in getselected() do
-      tbl.actual.angles = QAngle(x, y, z)
-      tbl.marker:SetAngles(QAngle(x, y, z))
-    end
+  local x,y,z = tonumber(arg1),(arg2==nil and 0 or tonumber(arg2)),(arg3==nil and 0 or tonumber(arg3))
+  for id,tbl in getselected() do
+    tbl.actual.angles = QAngle(x, y, z)
+    tbl.marker:SetAngles(QAngle(x, y, z))
   end
 end)
 
@@ -302,16 +298,20 @@ mv_chat.register("stack", function(player,amount,_x,_y,_z,_rx,_ry,_rz)
     local pyr = QAngle((_rx==nil and 0 or _rx),(_ry==nil and 0 or _ry),(_rz==nil and 0 or _rz))
     for id,tbl in getselected() do
       local refent = tbl.actual
-      local newent = {
-        classname = refent.classname,
-        origin = copyvector(refent.origin),
-        angles = QAngle(0,0,0)
-      }
-      if (refent.targetname) then newent.angles = refent.targetname end
-      if (refent.angles) then newent.angles = copyvector(refent.angles) end
+      local origin = copyvector(refent.origin)
+      local angles = copyvector(refent.angles)
+
       for i=1,amount do
-        newent.origin = newent.origin + offset
-        newent.angles = newent.angles + pyr
+        origin = origin + offset
+        angles = angles + pyr
+
+        local newent = {
+          classname = refent.classname,
+          targetname = refent.targetname,
+          origin = copyvector(origin),
+          angles = copyvector(angles)
+        }
+
         local m = entload.spawn(entload.tomarker(newent))
         entload.newents[m:GetId()] = {actual = newent, marker = m, selected = false}
       end
