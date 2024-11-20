@@ -37,14 +37,6 @@ markernotffscript = {
  ff_miniturret     = "models/buildable/respawn_turret/respawn_turret.mdl"
 }
 
-function copyvector(vector)
-  if (type(vector) == "userdata" and tostring(vector):sub(1,6) == "Vector") then
-    return Vector(vector.x, vector.y, vector.z)
-  elseif (type(vector) == "userdata" and tostring(vector):sub(1,6) == "QAngle") then
-    return QAngle(vector.x, vector.y, vector.z)
-  end
-end
-
 function entload.tomarker(enttbl)
   local copy = table.copy(enttbl)
   local class = enttbl.classname

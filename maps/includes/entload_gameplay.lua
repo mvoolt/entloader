@@ -149,3 +149,43 @@ function baseflag:touch( touch_entity ) -- overridden to update objective marker
 
 	end
 end
+
+upjet = info_ff_script:new({
+	model = "models/editor/scriptedsequence.mdl",
+	invisible = true,
+	velocity = Vector(0,0,800),
+	notouch = {},
+	touchflags = {AllowFlags.kOnlyPlayers,AllowFlags.kBlue, AllowFlags.kRed, AllowFlags.kYellow, AllowFlags.kGreen}
+})
+
+function upjet:touch(player)
+	local player = CastToPlayer(player)
+	local startvel = player:GetVelocity()
+	local player_id = player:GetSteamID()
+	if startvel.z < -20 then
+		self.notouch[player_id] = true
+		AddSchedule(entity:GetName() .. "-" .. player_id, 1.2, function()
+			self.notouch[player_id] = nil
+		end)
+		return;
+	end
+	if self.notouch[player_id] then return; end
+	self.notouch[player_id] = true
+
+	AddSchedule(entity:GetName() .. "-" .. player_id, 2, function()
+		self.notouch[player_id] = nil
+	end)
+	AddSchedule("wait" .. tostring(RandomInt(1,9999)), 0.1, function()
+		player:Teleport(copyvector(player:GetOrigin()) + Vector(0,0,10), player:GetAngles(), copyvector(startvel) + copyvector(self.velocity))
+	end)
+end
+
+function upjet:spawn()
+	-- make it invisible
+	if (self.invisible) then
+		entity:SetRenderFx(RenderFx.kFadeFast)
+		entity:SetRenderMode(6) -- RENDERMODE_ENVIROMENTAL
+	end
+	info_ff_script.spawn(self)
+end
+

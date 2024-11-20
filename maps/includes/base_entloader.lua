@@ -13,6 +13,14 @@ function entload.init(arr)
   end
 end
 
+function copyvector(vector)
+  if (type(vector) == "userdata" and tostring(vector):sub(1,6) == "Vector") then
+    return Vector(vector.x, vector.y, vector.z)
+  elseif (type(vector) == "userdata" and tostring(vector):sub(1,6) == "QAngle") then
+    return QAngle(vector.x, vector.y, vector.z)
+  end
+end
+
 function strtovector(str)
   local tbl = {}
   for i in str:gmatch("%S+") do table.insert(tbl, tonumber(i)) end
