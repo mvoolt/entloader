@@ -62,10 +62,22 @@ function entload.tomarker(enttbl)
   return copy
 end
 
+function entload.onspawn(player)
+  local player = CastToPlayer(player)
+  if not entload.plyrtbl[player:GetSteamID()] then
+    entload.plyrtbl[player:GetSteamID()] = {clickTimes = 0, selected = 0, newents = {}}
+  end
+
+  player:GiveWeapon("ff_weapon_crowbar",  false) -- spawns info_ff_teamspawn
+  player:GiveWeapon("ff_weapon_medkit",   false) -- spawns healthkit
+  player:GiveWeapon("ff_weapon_knife",    false) -- spawns armorkit
+  player:GiveWeapon("ff_weapon_umbrella", false) -- spawns bigpack
+  player:GiveWeapon("ff_weapon_spanner",  false) -- the tool
+end
+
 function entload.onuse(player)
   local player = CastToPlayer(player)
   local w = player:GetActiveWeaponName()
-  if not entload.plyrtbl[player:GetSteamID()] then entload.plyrtbl[player:GetSteamID()] = {clickTimes = 0, newents = {}} end
   if w ~= "ff_weapon_spanner" then
     local plyrtbl = entload.plyrtbl[player:GetSteamID()]
     plyrtbl.clickTimes = plyrtbl.clickTimes + 1
@@ -150,6 +162,7 @@ entload.selectedcount = 0
 player_onuse = entload.onuse
 player_onmenuselect = mv_menu.onmenuselect
 player_onchat = mv_chat.onchat
+player_spawn = entload.onspawn
 entload_marker = info_ff_script:new({touchflags = {AllowFlags.kOnlyPlayers,AllowFlags.kBlue, AllowFlags.kRed, AllowFlags.kYellow, AllowFlags.kGreen}})
 
 function entload_marker:touch(touch_entity)
@@ -176,6 +189,7 @@ function entload_marker:touch(touch_entity)
     end
 end
 
+
 function entload_marker:spawn()
     info_ff_script.spawn(self)
 end
@@ -195,11 +209,7 @@ function getselected(player)
 end
 
 for _, player in ipairs(GetPlayers()) do
-        player:GiveWeapon("ff_weapon_crowbar",  false)
-        player:GiveWeapon("ff_weapon_medkit",   false)
-        player:GiveWeapon("ff_weapon_knife",    false)
-        player:GiveWeapon("ff_weapon_umbrella", false)
-        player:GiveWeapon("ff_weapon_spanner",  false)
+  entload.onspawn(player)
 end
 
 mv_chat.register("save", function(player, suffix)
@@ -261,10 +271,10 @@ mv_chat.register("spawn", function(player,arg1,arg2)
   end
 end)
 mv_chat.register("translate", function(player,arg1,arg2,arg3)
-  if not arg1  then
+  if not arg1 then
     ChatToAll("Not enough params! usage: -translate <x> [y] [z]")
   else
-    local x,y,z = tonumber(arg1),(arg2==nil and 0 or tonumber(arg2)),(arg3==nil and 0 or tonumber(arg3))
+    local x,y,z = arg1,(arg2==nil and 0 or arg2),(arg3==nil and 0 or arg3)
     for id,tbl in getselected(player) do
       tbl.marker:SetOrigin(tbl.actual.origin + Vector(x,y,z))
       tbl.actual.origin = tbl.actual.origin + Vector(x,y,z)
@@ -272,7 +282,7 @@ mv_chat.register("translate", function(player,arg1,arg2,arg3)
   end
 end)
 mv_chat.register("setrot", function(player,arg1,arg2,arg3)
-  local x,y,z = tonumber(arg1),(arg2==nil and 0 or tonumber(arg2)),(arg3==nil and 0 or tonumber(arg3))
+  local x,y,z = (arg2==nil and 0 or arg2),(arg2==nil and 0 or arg2),(arg3==nil and 0 or arg3)
   for id,tbl in getselected(player) do
     tbl.actual.angles = QAngle(x, y, z)
     tbl.marker:SetAngles(QAngle(x, y, z))
@@ -283,7 +293,7 @@ mv_chat.register("rotate", function(player,arg1,arg2,arg3)
   if not arg1 then
     ChatToAll("Not enough params! usage: -setrot <x> [y] [z]")
   else
-    local x,y,z = tonumber(arg1),(arg2==nil and 0 or tonumber(arg2)),(arg3==nil and 0 or tonumber(arg3))
+    local x,y,z = arg1,(arg2==nil and 0 or arg2),(arg3==nil and 0 or arg3)
     for id,tbl in getselected(player) do
       tbl.actual.angles = tbl.actual.angles + QAngle(x, y, z)
       tbl.marker:SetAngles((tbl.actual.angles + QAngle(x, y, z)))
