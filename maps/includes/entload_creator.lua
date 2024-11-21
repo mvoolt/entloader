@@ -65,7 +65,7 @@ end
 function entload.onspawn(player)
   local player = CastToPlayer(player)
   if not entload.plyrtbl[player:GetSteamID()] then
-    entload.plyrtbl[player:GetSteamID()] = {clickTimes = 0, selected = 0, newents = {}}
+    entload.plyrtbl[player:GetSteamID()] = {clickTimes = 0, selectedcount = 0, newents = {}}
   end
 
   player:GiveWeapon("ff_weapon_crowbar",  false) -- spawns info_ff_teamspawn
@@ -78,8 +78,8 @@ end
 function entload.onuse(player)
   local player = CastToPlayer(player)
   local w = player:GetActiveWeaponName()
+  local plyrtbl = entload.plyrtbl[player:GetSteamID()]
   if w ~= "ff_weapon_spanner" then
-    local plyrtbl = entload.plyrtbl[player:GetSteamID()]
     plyrtbl.clickTimes = plyrtbl.clickTimes + 1
     makehud(player)
     AddSchedule(player:GetSteamID() .. "_clicking", 1.0, function()
@@ -111,7 +111,7 @@ function entload.onuse(player)
       ChatToAll("assume SOMETHING has been spawned at " .. tostring(newent.origin))
     end
   else
-    mv_menu.ShowToPlayer(player, "spanner", "Spanner Menu (" .. entload.selectedcount .. " selected)")
+    mv_menu.ShowToPlayer(player, "spanner", "Spanner Menu (" .. plyrtbl.selectedcount .. " selected)")
   end
 end
 
@@ -158,7 +158,6 @@ IncludeScript("mv_menusystem")
 entload.devmodeon = true
 entload.plyrtbl = {}
 mv_chat.prefix = "-"
-entload.selectedcount = 0
 player_onuse = entload.onuse
 player_onmenuselect = mv_menu.onmenuselect
 player_onchat = mv_chat.onchat
@@ -178,13 +177,15 @@ function entload_marker:touch(touch_entity)
       entity:SetRenderFx(plyrtbl.newents[entity_id].selected and RenderFx.kFlickerFast or 0)
 
       if plyrtbl.newents[entity_id].selected then -- i could've just done a = 0 for _,b in ipairs(newents) do if b.selected then a=a+1 end end
-          entload.selectedcount = entload.selectedcount + 1 -- but i think this is much less intensive
+          plyrtbl.selectedcount = plyrtbl.selectedcount + 1 -- but i think this is much less intensive
       else
-          entload.selectedcount = entload.selectedcount - 1
+          plyrtbl.selectedcount = plyrtbl.selectedcount - 1
       end
 
       AddSchedule(entity:GetName() .. "_" .. entity_id, 2, function()
-          plyrtbl.newents[entity_id].notouch = nil
+          if plyrtbl.newents[entity_id] then
+            plyrtbl.newents[entity_id].notouch = nil
+          end -- The entity may have been deleted before the notouch countdown expires
       end)
     end
 end
@@ -337,7 +338,7 @@ local function removeall(player)
   for id,tbl in getselected(player) do
     RemoveEntity(tbl.marker)
     entload.plyrtbl[player:GetSteamID()].newents[id] = nil
-    entload.selectedcount = entload.selectedcount - 1
+    entload.plyrtbl[player:GetSteamID()].selectedcount = entload.plyrtbl[player:GetSteamID()].selectedcount - 1
   end
 end
 mv_menu.register("spanner", "Remove", removeall)
@@ -378,7 +379,7 @@ local function deselectall(player)
   for id,tbl in getselected(player) do
     tbl.marker:SetRenderFx(0)
     tbl.selected = false
-    entload.selectedcount = entload.selectedcount - 1
+    entload.plyrtbl[player:GetSteamID()].selectedcount = entload.plyrtbl[player:GetSteamID()].selectedcount - 1
   end
 end
 mv_menu.register("spanner", "Deselect", deselectall)
