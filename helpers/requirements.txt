@@ -1,0 +1,2 @@
+valvebsp
+vdf @ git+https://github.com/solsticegamestudios/vdf.git@v4.0

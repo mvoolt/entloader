@@ -8,6 +8,7 @@ function entload.init(arr)
     if (def["classname"] == nil or def["origin"] == nil) then
       ConsoleToAll("index " .. i .. " is missing either classname or origin, skipping")
     else
+      print("Spawning: " .. i)
       entload.spawn(def)
     end
   end

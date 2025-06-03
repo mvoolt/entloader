@@ -1,5 +1,6 @@
 IncludeScript("base_teamplay")
 IncludeScript("base_ctf") -- we'll need team CTF flags
+IncludeScript("dm_items")
 
 entcap = info_ff_script:new({
 	model = "models/props_c17/substation_stripebox01a.mdl",
